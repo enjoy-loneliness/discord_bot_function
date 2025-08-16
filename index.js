@@ -1,60 +1,93 @@
-// 引入 discord.js 和其他必要的模块
+require('proxy-agent');
 const { Client, Events, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
-
-// 使用 dotenv 配置环境变量，从 .env 文件中加载 token
 require('dotenv').config();
-const token = process.env.DISCORD_TOKEN;
 
-// 创建一个新的客户端实例
+// --- 2. 代理设置 ---
+// 只需要确保环境变量被加载即可，proxy-agent 会自动读取
+if (process.env.HTTPS_PROXY) {
+  console.log(`✅ [全局] 代理已通过环境变量启用: ${process.env.HTTPS_PROXY}`);
+}
+
+// --- 3. 客户端初始化 ---
+// 注意：这里恢复到了最原始的状态，不再需要传入 agent
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent, // 确保开启了消息内容意图
-  ],
+  intents: [GatewayIntentBits.Guilds],
 });
 
-// --- 命令处理 ---
+// --- 4. 全局缓存和数据获取 ---
+client.symbolsCache = [];
+
+async function fetchBinanceSymbols() {
+  try {
+    // 这里的 fetch 会被 proxy-agent 自动代理，无需任何额外参数
+    const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
+    const data = await res.json();
+    client.symbolsCache = data.symbols.map(s => s.symbol);
+    console.log(`✅ 已成功加载/刷新 ${client.symbolsCache.length} 个币种`);
+  } catch (err) {
+    console.error('❌ 获取币安币种失败:', err);
+  }
+}
+
+// --- 5. 命令加载逻辑 (无需修改) ---
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
   const command = require(filePath);
-  if ('data' in command && 'execute' in command) {
+  if ('data' in command && ('execute' in command || 'autocomplete' in command)) {
     client.commands.set(command.data.name, command);
   } else {
-    console.log(`[警告] ${filePath} 中的命令缺少 "data" 或 "execute" 属性。`);
+    console.log(`[警告] ${filePath} 中的命令缺少必需的属性。`);
   }
 }
-// --- 命令处理结束 ---
 
-// 当客户端准备好时，这个事件只会触发一次
-client.once(Events.ClientReady, c => {
+// --- 6. 事件监听器 (无需修改) ---
+client.once(Events.ClientReady, async c => {
   console.log(`✅ 准备就绪! 已登录为 ${c.user.tag}`);
+  await fetchBinanceSymbols();
+  setInterval(fetchBinanceSymbols, 3600 * 1000);
 });
 
-// 监听交互事件 (斜杠命令)
 client.on(Events.InteractionCreate, async interaction => {
-  if (!interaction.isChatInputCommand()) return; // 如果不是斜杠命令，则不处理
-
+  // ... (您的交互处理代码无需修改) ...
   const command = interaction.client.commands.get(interaction.commandName);
+  if (!command) return;
 
-  if (!command) {
-    console.error(`未找到名为 ${interaction.commandName} 的命令。`);
-    return;
-  }
-
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    await interaction.reply({ content: '执行此命令时出错！', ephemeral: true });
+  if (interaction.isAutocomplete()) {
+    if (command.autocomplete) {
+      try {
+        await command.autocomplete(interaction);
+      } catch (error) {
+        console.error(`处理 ${interaction.commandName} 自动补全出错:`, error);
+      }
+    }
+  } else if (interaction.isChatInputCommand()) {
+    if (command.execute) {
+      try {
+        await command.execute(interaction);
+      } catch (error) {
+        console.error(`执行 ${interaction.commandName} 出错:`, error);
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp({ content: '执行此命令时出错！', ephemeral: true });
+        } else {
+          await interaction.reply({ content: '执行此命令时出错！', ephemeral: true });
+        }
+      }
+    }
   }
 });
 
-// 使用你的 token 登录到 Discord
-client.login(token);
+// --- 7. 机器人登录 ---
+client.login(process.env.DISCORD_TOKEN);
+
+// --- 8. 全局错误捕获 (无需修改) ---
+process.on('unhandledRejection', error => {
+  console.error('未处理的 Promise 拒绝:', error);
+});
+process.on('uncaughtException', error => {
+  console.error('未捕获的异常:', error);
+});
