@@ -1,7 +1,7 @@
+const axios = require('axios');
 const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-  // 使用 SlashCommandBuilder 提高代码可读性和可靠性
   data: new SlashCommandBuilder()
     .setName('q')
     .setDescription('查询币安支持的币种')
@@ -13,33 +13,64 @@ module.exports = {
         .setAutocomplete(true)
     ),
 
-  // autocomplete 直接从 client.symbolsCache 读取，响应速度变为瞬时
+  // 使用本地缓存为用户提供快速的输入建议
   async autocomplete(interaction) {
-    // 增加了错误处理，防止因意外错误导致交互失败
     try {
       const focusedValue = interaction.options.getFocused();
-      // 直接从客户端缓存中获取币种列表
       const symbols = interaction.client.symbolsCache || [];
 
+      if (!Array.isArray(symbols)) {
+        return await interaction.respond([]);
+      }
+
       const filtered = symbols
-        .filter(symbol => symbol.toLowerCase().includes(focusedValue.toLowerCase()))
+        .filter(symbol => {
+          if (typeof symbol !== 'string') return false;
+          return symbol.toLowerCase().includes(focusedValue.toLowerCase());
+        })
         .slice(0, 25);
 
       await interaction.respond(filtered.map(symbol => ({ name: symbol, value: symbol })));
     } catch (error) {
-      console.error('自动补全时发生错误:', error);
-      await interaction.respond([]); // 发生错误时返回空列表
+      console.error('[q.js] 自动补全时发生错误:', error);
+      if (!interaction.responded) {
+        try {
+          await interaction.respond([]);
+        } catch (e) {
+          // Ignore secondary errors
+        }
+      }
     }
   },
 
+  // 当用户按下回车后，执行此函数
   async execute(interaction) {
+    await interaction.deferReply();
     const symbol = interaction.options.getString('symbol');
-    // 检查用户输入的币种是否真的存在于缓存中（更严谨）
-    const symbols = interaction.client.symbolsCache || [];
-    if (symbols.includes(symbol)) {
-      await interaction.reply(`🔍 你选择的币种: **${symbol}**`);
-    } else {
-      await interaction.reply({ content: `❌ 未找到币种: **${symbol}**`, ephemeral: true });
+
+    const n8nWebhookUrl = 'https://n8n.fangxingo.dpdns.org/webhook/dc-tg';
+
+    try {
+      console.log(`[q.js] 正在向 n8n 发送请求, symbol: ${symbol}`);
+      const response = await axios.post(
+        n8nWebhookUrl,
+        {
+          symbol: symbol,
+          userId: interaction.user.id,
+          userName: interaction.user.username,
+        },
+        {
+          // axios不要使用任何内置的代理逻辑
+          proxy: false,
+        }
+      );
+
+      const replyMessage = response.data.message || '没有信息。';
+
+      await interaction.editReply(replyMessage);
+    } catch (error) {
+      console.error('[q.js] 调用 n8n 时发生错误:', error.message);
+      await interaction.editReply('❌ 查询时发生错误，无法连接到服务。');
     }
   },
 };

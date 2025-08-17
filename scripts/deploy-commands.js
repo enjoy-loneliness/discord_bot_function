@@ -3,20 +3,9 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { REST, Routes } = require('discord.js');
-const { ProxyAgent } = require('undici'); // 确认这行存在
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.CLIENT_ID;
-
-// 优先使用 .env 里 PROXY_URL
-const proxyUrl = process.env.PROXY_URL || process.env.HTTP_PROXY || process.env.HTTPS_PROXY;
-const agent = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
-
-if (agent) {
-  console.log(`✅ [Deploy] 使用代理: ${proxyUrl}`);
-} else {
-  console.log('✅ [Deploy] 未配置代理，使用系统默认网络');
-}
 
 const commands = [];
 const commandsPath = path.join(__dirname, '..', 'commands');
@@ -39,20 +28,14 @@ if (!commands.length) {
   console.warn('⚠️ 没有发现命令文件，请确认 commands 文件夹下有 .js 命令');
 }
 
-
+// 使用一个纯净的、不知道代理存在的 REST 客户端
 const rest = new REST().setToken(TOKEN);
-// 如果 agent 存在 (即已配置代理)，则为 REST 客户端设置代理
-if (agent) {
-  rest.setAgent(agent);
-}
 
-// ---------------------------
 // 注册命令
-// ---------------------------
 (async () => {
   try {
     console.log(`🚀 正在为 ${commands.length} 个命令进行注册...`);
-    // 'rest.put' 现在会自动使用我们设置的 agent
+    // 'rest.put' 会被操作系统的TUN模式自动代理
     const data = await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
     console.log(`✅ 成功注册了 ${data.length} 个命令`);
   } catch (error) {
