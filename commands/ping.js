@@ -8,6 +8,6 @@ module.exports = {
 
   // 命令的执行逻辑
   async execute(interaction) {
-    await interaction.reply('Pong!');
+    await interaction.reply('Pong 你好啊!');
   },
 };
