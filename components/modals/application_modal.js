@@ -33,7 +33,6 @@ module.exports = {
           iconURL: applicantMember.user.displayAvatarURL(),
         })
         .addFields(
-          { name: '申请人', value: `${applicantMember}`, inline: true },
           { name: 'UID', value: `\`${finalData.uid}\``, inline: true },
           { name: '交易所', value: finalData.exchange || '未选择', inline: false },
           { name: '申请原因', value: reasonInChinese, inline: false }
