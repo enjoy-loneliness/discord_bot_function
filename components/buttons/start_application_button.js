@@ -1,12 +1,14 @@
-const { ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+const { ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
-  customId: 'start_application_button',
+  customId: 'start_application_',
+  isDynamic: true,
   async execute(interaction) {
-    interaction.client.applications.set(interaction.user.id, {});
+    const applicantId = interaction.customId.split('_').pop();
+    interaction.client.applications.set(applicantId, {});
 
     const exchangeSelect = new StringSelectMenuBuilder()
-      .setCustomId('exchange_select')
+      .setCustomId(`exchange_select_${applicantId}`)
       .setPlaceholder('请选择你所在的交易所')
       .addOptions([
         { label: 'Binance', value: 'binance' },
@@ -14,13 +16,12 @@ module.exports = {
         { label: 'Bybit', value: 'bybit' },
         { label: 'Other', value: 'other' },
       ]);
-
     const row = new ActionRowBuilder().addComponents(exchangeSelect);
 
     await interaction.reply({
       content: '第一步：请选择你的交易所。',
       components: [row],
-      ephemeral: true,
+      flags: [MessageFlags.Ephemeral],
     });
   },
 };

@@ -14,10 +14,10 @@ for (const type of componentTypes) {
   for (const file of componentFiles) {
     const handler = require(path.join(componentPath, file));
     if ('customId' in handler && 'execute' in handler) {
-      componentHandlers.set(handler.customId, handler);
+        componentHandlers.set(handler.customId, handler);
+      }
     }
   }
-}
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -39,7 +39,18 @@ module.exports = {
     }
     // 分发按钮、下拉菜单、弹窗等组件交互
     else {
-      const handler = componentHandlers.get(interaction.customId);
+      let handler;
+      // 检查是否为动态ID
+      for (const [id, h] of componentHandlers.entries()) {
+        if (h.isDynamic && interaction.customId.startsWith(id)) {
+          handler = h;
+          break;
+        }
+      }
+      // 如果不是动态ID，则精确匹配
+      if (!handler) {
+        handler = componentHandlers.get(interaction.customId);
+      }
       if (!handler) {
         console.warn(`未找到 Custom ID 为 "${interaction.customId}" 的组件处理器。`);
         return;
