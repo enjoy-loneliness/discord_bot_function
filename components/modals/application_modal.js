@@ -1,5 +1,10 @@
 const { EmbedBuilder, MessageFlags } = require('discord.js');
 
+const translations = {
+  'community': '已入金',
+  'partnership': '未入金',
+};
+
 module.exports = {
   customId: 'application_modal_',
   isDynamic: true,
@@ -18,9 +23,11 @@ module.exports = {
     const applicantMember = await interaction.guild.members.fetch(applicantId).catch(() => null);
 
     if (logChannel && applicantMember) {
+      const reasonInChinese = translations[finalData.reason] || finalData.reason;
+
       const resultEmbed = new EmbedBuilder()
-        .setTitle('📄 新成员申请单')
-        .setColor('Green')
+        .setTitle('📄 新成员权限申请单')
+        .setColor(finalData.reason === 'community' ? 'Green' : 'Red')
         .setAuthor({
           name: applicantMember.user.tag,
           iconURL: applicantMember.user.displayAvatarURL(),
@@ -29,7 +36,7 @@ module.exports = {
           { name: '申请人', value: `${applicantMember}`, inline: true },
           { name: 'UID', value: `\`${finalData.uid}\``, inline: true },
           { name: '交易所', value: finalData.exchange || '未选择', inline: false },
-          { name: '申请原因', value: finalData.reason || '未选择', inline: false }
+          { name: '申请原因', value: reasonInChinese, inline: false }
         )
         .setTimestamp()
         .setFooter({ text: `用户ID: ${applicantId}` });

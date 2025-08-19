@@ -9,17 +9,19 @@ module.exports = {
 
     const exchangeSelect = new StringSelectMenuBuilder()
       .setCustomId(`exchange_select_${applicantId}`)
-      .setPlaceholder('请选择你所在的交易所')
+      .setPlaceholder('请选择入金交易所')
       .addOptions([
+        { label: 'Bitget', value: 'bitget' },
+        { label: 'Weex', value: 'weex' },
+        { label: 'Bybit', value: 'bybit' },
+        { label: 'Gate', value: 'gate' },
         { label: 'Binance', value: 'binance' },
         { label: 'OKX', value: 'okx' },
-        { label: 'Bybit', value: 'bybit' },
-        { label: 'Other', value: 'other' },
       ]);
     const row = new ActionRowBuilder().addComponents(exchangeSelect);
 
     await interaction.reply({
-      content: '第一步：请选择你的交易所。',
+      content: '第一步：请选择入金交易所。',
       components: [row],
       flags: [MessageFlags.Ephemeral],
     });

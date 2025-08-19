@@ -11,14 +11,12 @@ module.exports = {
 
     const reasonSelect = new StringSelectMenuBuilder()
       .setCustomId(`reason_select_${applicantId}`)
-      .setPlaceholder('请选择你的申请原因')
+      .setPlaceholder('请选择申请原因')
       .addOptions([
-        { label: '社区交流', value: 'community' },
-        { label: '项目合作', value: 'partnership' },
-        { label: '技术探讨', value: 'tech_discussion' },
-        { label: '其他', value: 'other_reason' },
+        { label: '已入金', value: 'community' },
+        { label: '未入金', value: 'partnership' },
       ]);
     const row = new ActionRowBuilder().addComponents(reasonSelect);
-    await interaction.update({ content: '第二步：请选择你的申请原因。', components: [row] });
+    await interaction.update({ content: '第二步：请选择申请原因。', components: [row] });
   },
 };

@@ -7,7 +7,7 @@ module.exports = {
     const applicantId = interaction.customId.split('_').pop();
     const modal = new ModalBuilder()
       .setCustomId(`application_modal_${applicantId}`)
-      .setTitle('成员申请');
+      .setTitle('权限申请');
     const uidInput = new TextInputBuilder()
       .setCustomId('uid_input')
       .setLabel('你的交易所 UID')
