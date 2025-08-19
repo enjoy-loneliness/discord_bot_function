@@ -55,6 +55,8 @@ module.exports = {
       const response = await axios.post(
         n8nWebhookUrl,
         {
+          interactionToken: interaction.token,
+          applicationId: interaction.applicationId,
           symbol: symbol,
           userId: interaction.user.id,
           userName: interaction.user.username,
@@ -65,12 +67,36 @@ module.exports = {
         }
       );
 
-      const replyMessage = response.data.message || '没有信息。';
+      console.log('[q.js] 收到来自的原始回复:', response.data);
 
-      await interaction.editReply(replyMessage);
+      let finalReply = '❌未知的回复格式。'; // 默认错误消息
+      const n8nData = response.data.replyMessage;
+
+      if (typeof n8nData === 'string' && n8nData.length > 0) {
+        finalReply = n8nData;
+      } else if (typeof n8nData === 'number') {
+        finalReply = `${n8nData}`;
+      } else if (n8nData && typeof n8nData === 'object') {
+        if (n8nData.replyMessage) {
+          finalReply = n8nData.replyMessage;
+        } else {
+          finalReply =
+            '收到信息详情如下：\n```json\n' +
+            JSON.stringify(n8nData, null, 2) +
+            '\n```';
+        }
+      }
+
+      if (finalReply.length > 2000) {
+        finalReply = finalReply.substring(0, 1997) + '...';
+      }
+
+      await interaction.editReply(finalReply);
     } catch (error) {
-      console.error('[q.js] 调用 n8n 时发生错误:', error.message);
-      await interaction.editReply('❌ 查询时发生错误，无法连接到服务。');
+      console.error('[q.js] 调用 n8n 或回复 Discord 时发生错误:', error.message);
+      if (interaction.replied || interaction.deferred) {
+        await interaction.editReply('❌ 查询时发生错误，无法连接到外部服务。');
+      }
     }
   },
 };
