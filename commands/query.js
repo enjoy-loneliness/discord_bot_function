@@ -55,6 +55,8 @@ module.exports = {
       const response = await axios.post(
         n8nWebhookUrl,
         {
+          interactionToken: interaction.token,
+          applicationId: interaction.applicationId,
           symbol: symbol,
           userId: interaction.user.id,
           userName: interaction.user.username,
