@@ -9,9 +9,9 @@ const {
 module.exports = {
   name: Events.GuildMemberAdd,
   async execute(member) {
-    // 在函数开头直接返回，关闭这个功能
-    console.log(`[事件] GuildMemberAdd 事件已触发，但功能已禁用，已忽略新成员: ${member.user.tag}`);
-    return;
+    // // 在函数开头直接返回，关闭这个功能
+    // console.log(`[事件] GuildMemberAdd 事件已触发，但功能已禁用，已忽略新成员: ${member.user.tag}`);
+    // return;
     const welcomeChannelId = process.env.WELCOME_CHANNEL_ID;
     const channel = member.guild.channels.cache.get(welcomeChannelId);
 
