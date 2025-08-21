@@ -45,36 +45,36 @@ module.exports = {
       console.error(`找不到日志频道或申请人 (ID: ${applicantId})。`);
     }
 
-    if (applicantMember) {
-      // 从 .env 文件读取两个 role ID
-      const roleIds = [process.env.ROLE_ID_1, process.env.ROLE_ID_2].filter(id => id);
+    // if (applicantMember) {
+    //   // 从 .env 文件读取两个 role ID
+    //   const roleIds = [process.env.ROLE_ID_1, process.env.ROLE_ID_2].filter(id => id);
 
-      if (roleIds.length === 0) {
-        console.warn('警告：.env 文件中未设置 ROLE_ID_1 或 ROLE_ID_2，无法为用户添加身份组。');
-      } else {
-        try {
-          const rolesToAdd = roleIds
-            .map(id => interaction.guild.roles.cache.get(id))
-            .filter(role => role);
+    //   if (roleIds.length === 0) {
+    //     console.warn('警告：.env 文件中未设置 ROLE_ID_1 或 ROLE_ID_2，无法为用户添加身份组。');
+    //   } else {
+    //     try {
+    //       const rolesToAdd = roleIds
+    //         .map(id => interaction.guild.roles.cache.get(id))
+    //         .filter(role => role);
 
-          if (rolesToAdd.length > 0) {
-            await applicantMember.roles.add(rolesToAdd);
-            console.log(
-              `已成功为用户 ${applicantMember.user.tag} 添加了 ${
-                rolesToAdd.length
-              } 个身份组: ${rolesToAdd.map(r => r.name).join(', ')}`
-            );
-          } else {
-            console.error(`错误：在服务器中找不到 .env 文件中指定的任何身份组。`);
-          }
-        } catch (error) {
-          console.error(
-            `为用户添加身份组时出错！请检查机器人的身份组是否在要添加的身份组之上，并且拥有“管理身份组”的权限。`,
-            error
-          );
-        }
-      }
-    }
+    //       if (rolesToAdd.length > 0) {
+    //         await applicantMember.roles.add(rolesToAdd);
+    //         console.log(
+    //           `已成功为用户 ${applicantMember.user.tag} 添加了 ${
+    //             rolesToAdd.length
+    //           } 个身份组: ${rolesToAdd.map(r => r.name).join(', ')}`
+    //         );
+    //       } else {
+    //         console.error(`错误：在服务器中找不到 .env 文件中指定的任何身份组。`);
+    //       }
+    //     } catch (error) {
+    //       console.error(
+    //         `为用户添加身份组时出错！请检查机器人的身份组是否在要添加的身份组之上，并且拥有“管理身份组”的权限。`,
+    //         error
+    //       );
+    //     }
+    //   }
+    // }
 
     interaction.client.applications.delete(applicantId);
   },
