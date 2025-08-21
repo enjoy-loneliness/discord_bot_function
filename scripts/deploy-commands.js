@@ -20,10 +20,10 @@ const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('
 for (const file of commandFiles) {
 
   // 跳过apply.js文件
-    if (file === 'apply.js') {
-        console.log(`[部署] 已跳过命令文件: ${file}`);
-        continue;
-  }
+  //   if (file === 'apply.js') {
+  //       console.log(`[部署] 已跳过命令文件: ${file}`);
+  //       continue;
+  // }
 
   const command = require(path.join(commandsPath, file));
   if ('data' in command) {
