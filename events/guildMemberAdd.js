@@ -25,7 +25,7 @@ module.exports = {
       `哈喽 ${member} , 欢迎加入后入资本 ICAC`,
       ``,
       `使用队长交易所 [点此注册](https://vlink.cc/a01) 即可解锁权限`,
-      `入金要求最低100U`,
+      `入金要求最低300U`,
       ``,
       `🎉 推荐 BITGET / GATE / 币安 / Bybit`,
       ``,
