@@ -1,19 +1,25 @@
-const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  MessageFlags,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require('discord.js');
 
-// 交易所名称映射
 const exchangeMap = {
   'binance': 'Binance (币安)',
   'okx': 'OKX (欧易)',
   'bybit': 'Bybit',
   'bitget': 'Bitget',
   'gate': 'Gate.io',
+  'weex': 'Weex',
 };
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('identity')
     .setDescription('提交交易所 UID 进行权限审核')
-    // 1. 交易所选择项
     .addStringOption(option =>
       option
         .setName('exchange')
@@ -24,10 +30,10 @@ module.exports = {
           { name: 'OKX (欧易)', value: 'okx' },
           { name: 'Bybit', value: 'bybit' },
           { name: 'Bitget', value: 'bitget' },
-          { name: 'Gate.io', value: 'gate' }
+          { name: 'Gate.io', value: 'gate' },
+          { label: 'Weex', value: 'weex' }
         )
     )
-    // 2. UID 输入项
     .addStringOption(option =>
       option.setName('uid').setDescription('请输入你的交易所 UID').setRequired(true)
     ),
@@ -40,9 +46,7 @@ module.exports = {
     const adminChannelId = process.env.ADMIN_CHANNEL_ID;
     const adminChannel = interaction.guild.channels.cache.get(adminChannelId);
 
-    // 获取申请人对象
-    const applicantMember = interaction.member;
-
+    // 1. 给申请人发送“本人可见”回执
     await interaction.reply({
       content: `✅ **提交成功！**\n**交易所：** ${exchangeName}\n**UID：** \`${uidValue}\`\n管理员将会尽快审核。`,
       flags: [MessageFlags.Ephemeral],
@@ -65,16 +69,22 @@ module.exports = {
         .setTimestamp()
         .setFooter({ text: '身份审核系统' });
 
+      // 创建一个审核按钮，将申请人的 ID 埋入 customId
+      const approveButton = new ButtonBuilder()
+        .setCustomId(`approve_identity_${interaction.user.id}`)
+        .setLabel('通过审核')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('✅');
+
+      const row = new ActionRowBuilder().addComponents(approveButton);
+
       await adminChannel
         .send({
           content: `🔔 **收到来自 ${interaction.user.username} 的 UID 审核请求**`,
           embeds: [reviewEmbed],
+          components: [row],
         })
         .catch(err => console.error('发送管理员频道失败:', err));
-    } else {
-      console.error(
-        `错误：未找到管理员审核频道。请检查 .env 中的 ADMIN_CHANNEL_ID (当前值: ${adminChannelId})。`
-      );
     }
   },
 };
