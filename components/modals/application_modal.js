@@ -13,9 +13,9 @@ module.exports = {
     const finalData = interaction.client.applications.get(applicantId) || {};
     finalData.uid = interaction.fields.getTextInputValue('uid_input');
 
-    const logChannelId = process.env.LOG_CHANNEL_ID;
+    // const logChannelId = process.env.LOG_CHANNEL_ID;
     const adminChannelId = process.env.ADMIN_CHANNEL_ID;
-    const logChannel = interaction.guild.channels.cache.get(logChannelId);
+    // const logChannel = interaction.guild.channels.cache.get(logChannelId);
     const adminChannel = interaction.guild.channels.cache.get(adminChannelId);
     const applicantMember = await interaction.guild.members.fetch(applicantId).catch(() => null);
 
@@ -45,11 +45,11 @@ module.exports = {
       });
 
       // 发送到日志频道
-      if (logChannel) {
-        await logChannel
-          .send({ embeds: [resultEmbed] })
-          .catch(err => console.error('发送日志频道失败:', err));
-      }
+      // if (logChannel) {
+      //   await logChannel
+      //     .send({ embeds: [resultEmbed] })
+      //     .catch(err => console.error('发送日志频道失败:', err));
+      // }
 
       // 发送到管理员频道
       if (adminChannel) {
