@@ -14,7 +14,7 @@ module.exports = {
       const member = await guild.members.fetch(applicantId);
       const role = guild.roles.cache.get(selectedRoleId);
 
-      // 获取公共通知频道 ID (从 .env 读取 LOG_CHANNEL_ID)
+      // 获取公共通知频道 ID (从 .env 读取 ROLE_CHANNEL_ID)
       const roleChannelId = process.env.ROLE_CHANNEL_ID;
       const roleChannel = guild.channels.cache.get(roleChannelId);
 
