@@ -13,16 +13,13 @@ module.exports = {
     const finalData = interaction.client.applications.get(applicantId) || {};
     finalData.uid = interaction.fields.getTextInputValue('uid_input');
 
-    await interaction.reply({
-      content: '✅ 你的申请已成功提交！我们将会尽快审核。',
-      flags: [MessageFlags.Ephemeral],
-    });
-
     const logChannelId = process.env.LOG_CHANNEL_ID;
+    const adminChannelId = process.env.ADMIN_CHANNEL_ID;
     const logChannel = interaction.guild.channels.cache.get(logChannelId);
+    const adminChannel = interaction.guild.channels.cache.get(adminChannelId);
     const applicantMember = await interaction.guild.members.fetch(applicantId).catch(() => null);
 
-    if (logChannel && applicantMember) {
+    if (applicantMember) {
       const reasonInChinese = translations[finalData.reason] || finalData.reason;
 
       const resultEmbed = new EmbedBuilder()
@@ -40,15 +37,42 @@ module.exports = {
         )
         .setTimestamp()
         .setFooter({ text: `用户ID: ${applicantId}` });
-      await logChannel.send({ embeds: [resultEmbed] });
+
+      await interaction.reply({
+        content: '✅ **申请已成功提交！** 以下是你的申请回执（仅你可见）：',
+        embeds: [resultEmbed],
+        flags: [MessageFlags.Ephemeral],
+      });
+
+      // 发送到日志频道
+      if (logChannel) {
+        await logChannel
+          .send({ embeds: [resultEmbed] })
+          .catch(err => console.error('发送日志频道失败:', err));
+      }
+
+      // 发送到管理员频道
+      if (adminChannel) {
+        await adminChannel
+          .send({
+            content: '🔔 **收到新成员申请单，请审核。**',
+            embeds: [resultEmbed],
+          })
+          .catch(err => console.error('发送管理员频道失败:', err));
+      }
     } else {
+      if (!interaction.replied) {
+        await interaction.reply({
+          content: '❌ 提交失败，找不到日志频道或申请人信息。',
+          flags: [MessageFlags.Ephemeral],
+        });
+      }
       console.error(`找不到日志频道或申请人 (ID: ${applicantId})。`);
     }
 
     // if (applicantMember) {
     //   // 从 .env 文件读取两个 role ID
     //   const roleIds = [process.env.ROLE_ID_1, process.env.ROLE_ID_2].filter(id => id);
-
     //   if (roleIds.length === 0) {
     //     console.warn('警告：.env 文件中未设置 ROLE_ID_1 或 ROLE_ID_2，无法为用户添加身份组。');
     //   } else {
@@ -56,7 +80,6 @@ module.exports = {
     //       const rolesToAdd = roleIds
     //         .map(id => interaction.guild.roles.cache.get(id))
     //         .filter(role => role);
-
     //       if (rolesToAdd.length > 0) {
     //         await applicantMember.roles.add(rolesToAdd);
     //         console.log(
